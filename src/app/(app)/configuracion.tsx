@@ -4,14 +4,13 @@ import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Text, View } from 'react-native';
 import { env } from '@/core/config/env';
-import { container } from '@/core/providers/container';
 import { colors } from '@/core/theme/tokens';
 import { segmentationRulesSchema, type SegmentationRules } from '@/modules/customers/domain/segmentation';
 import { useDataset, useResetData, useSaveRules } from '@/modules/customers/presentation/hooks';
 import type { ImportTarget } from '@/modules/imports/domain/importDomain';
 import { ImportWizard } from '@/modules/imports/presentation/ImportWizard';
 import { DatePicker } from '@/shared/components/pickers';
-import { Button, Card, ErrorState, Input, LoadingState, Modal, Notice, PageHeader, SectionTitle } from '@/shared/components/ui';
+import { Button, Card, ErrorState, Input, LoadingState, Modal, PageHeader, SectionTitle } from '@/shared/components/ui';
 
 const NUM_FIELDS: { key: Exclude<keyof SegmentationRules, 'fechaReferencia'>; label: string; hint: string }[] = [
   { key: 'frecuenteMinCompras12m', label: 'Frecuente: compras mínimas en 12 meses', hint: 'Frecuencia' },
@@ -68,9 +67,8 @@ export default function SettingsScreen() {
         <SectionTitle title="Base de datos" />
         <View className="flex-row items-center gap-2">
           <Database size={16} color={colors.primary} />
-          <Text className="text-sm text-gray-800">{container.storage === 'firebase' ? 'Firebase Cloud Firestore · sincronizada en la nube' : 'Almacenamiento local del dispositivo'}</Text>
+          <Text className="text-sm text-gray-800">Almacenamiento local de este dispositivo o navegador</Text>
         </View>
-        {container.storage === 'local' ? <Notice tone="warning">Firebase no está configurado: los datos solo se guardan en este dispositivo. Define las variables EXPO_PUBLIC_FIREBASE_* para usar la base de datos en la nube.</Notice> : null}
         <Text className="text-xs text-gray-500">Asistente: {env.aiMode === 'connected' && env.aiApiUrl ? `conectado a ${env.aiApiUrl}` : 'insights por reglas de negocio sobre tus datos'}.</Text>
         <View className="self-start mt-1">
           <Button label="Restablecer datos iniciales" icon={RotateCcw} variant="danger" onPress={() => setConfirmReset(true)} />

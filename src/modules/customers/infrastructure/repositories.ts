@@ -7,7 +7,7 @@ import type { TrmSeries } from '../domain/money';
 import type { CustomerRepository, SaleRepository, SettingsRepository, TrmRepository } from '../domain/repositories';
 import { DEFAULT_RULES, segmentationRulesSchema, type SegmentationRules } from '../domain/segmentation';
 
-// Firestore (o almacenamiento local si Firebase no está configurado). Ver core/storage/collection.ts
+// Almacenamiento local del dispositivo. Ver core/storage/collection.ts
 export function customerRepository(): CustomerRepository {
   const col = createCollection<Customer>('customers', () => customersFixture as Customer[]);
   return { list: () => col.all(), get: (id) => col.get(id), save: (c) => col.save(c), saveMany: (cs) => col.saveMany(cs), reset: () => col.reset() };

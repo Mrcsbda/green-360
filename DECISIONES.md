@@ -36,8 +36,8 @@
 
 ## Técnicas
 
-- **Base de datos:** Firebase Cloud Firestore + Firebase Auth (correo/contraseña). Sin variables de Firebase, la app usa almacenamiento local y un usuario local (`operativo1`).
-- Reglas de Firestore: solo usuarios autenticados. Si se agregan perfiles con distintos permisos, hay que endurecerlas por rol.
+- **Almacenamiento:** local (AsyncStorage / `localStorage`), por tiempos de entrega. Los datos viven en cada dispositivo. La integración con Firebase quedó en el historial de git (commit `4bb5104`) por si se retoma.
+- Autenticación local con un usuario (`operativo1`). Para varios usuarios hace falta un servicio de autenticación remoto.
 - **Tema:** paleta verde con complementarios (esmeralda, lima, verde azulado, ámbar), definida en variables CSS con valores claro/oscuro (`scripts/theme.mjs`). El modo se guarda por dispositivo.
 - Fechas con selector propio (calendario y hora) para que se vea igual en web, iOS y Android y respete el tema.
 - Gráficas: tooltip con el valor al pasar el mouse (web) o tocar (móvil) sobre cada punto o barra.

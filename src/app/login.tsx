@@ -39,7 +39,7 @@ export default function LoginScreen() {
             <Text className="text-sm text-gray-500 text-center">Dashboard de operaciones y gestión comercial</Text>
           </View>
           <Controller control={control} name="username" render={({ field }) => (
-            <Input label="Usuario o correo" autoCapitalize="none" autoComplete="username" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={errors.username?.message} placeholder="usuario@empresa.com" />
+            <Input label="Usuario" autoCapitalize="none" autoComplete="username" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={errors.username?.message} placeholder="operativo1" />
           )} />
           <Controller control={control} name="password" render={({ field }) => (
             <Input label="Contraseña" secureTextEntry autoComplete="password" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={errors.password?.message} onSubmitEditing={() => onSubmit()} />

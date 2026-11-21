@@ -1,6 +1,6 @@
 import { InvalidCredentialsError, type AuthService, type Session } from '../domain/auth';
 
-// shortcut: usuario local para correr la app sin Firebase configurado; con EXPO_PUBLIC_FIREBASE_* se usa firebaseAuthService.
+// shortcut: usuario y contraseña locales en el cliente; reemplazar por un servicio de autenticación remoto antes de manejar varios usuarios.
 const LOCAL_USERS = [{ username: 'operativo1', password: 'root123', nombre: 'Operativo 1', rol: 'Operaciones' }];
 const SESSION_HOURS = 8;
 

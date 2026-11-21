@@ -4,7 +4,7 @@ Aplicación multiplataforma (web, iOS y Android): Clientes 360°, segmentación 
 asistente IA, servicios y operaciones, e importación/exportación XLSX/CSV. Modo claro y oscuro.
 
 **Stack:** Expo SDK 58 · React Native 0.88 · TypeScript estricto · Expo Router · NativeWind (Tailwind) ·
-Zustand · TanStack Query · React Hook Form + Zod · react-native-gifted-charts · SheetJS · **Firebase (Auth + Cloud Firestore)** · Vitest.
+Zustand · TanStack Query · React Hook Form + Zod · react-native-gifted-charts · SheetJS · AsyncStorage · Vitest.
 
 ## Ejecutar
 
@@ -14,7 +14,7 @@ npm run web        # Expo Web en el navegador (recomendado para la demo)
 npm run ios        # o: npm run android  (Expo Go / development build)
 ```
 
-Sin Firebase configurado, la app usa almacenamiento local y el usuario `operativo1` / `root123`.
+Usuario: `operativo1` · contraseña: `root123`.
 
 | Script | Qué hace |
 |---|---|
@@ -24,19 +24,10 @@ Sin Firebase configurado, la app usa almacenamiento local y el usuario `operativ
 | `npm run fixtures` | Regenera `src/data/fixtures/*.json` (datos iniciales) desde los CSV de `../Green_Services_Recursos_de_Prueba/01_Datos` |
 | `node scripts/theme.mjs` | Regenera la paleta (claro/oscuro) en `global.css` y `src/core/theme/palette.ts` |
 
-## Firebase (base de datos)
+## Datos y almacenamiento
 
-1. Crea un proyecto en [Firebase](https://console.firebase.google.com) y agrega una app **Web**.
-2. **Authentication → Sign-in method:** habilita *Correo/contraseña* y crea los usuarios (p. ej. `operativo1@tuempresa.com`).
-3. **Firestore Database:** créala en modo producción y publica las reglas de `firestore.rules` (solo usuarios autenticados):
-   `npx firebase-tools deploy --only firestore:rules --project <id-del-proyecto>`
-4. Copia `.env.example` a `.env` y completa `EXPO_PUBLIC_FIREBASE_*` con la configuración de la app web.
-   Con `EXPO_PUBLIC_LOGIN_EMAIL_DOMAIN=tuempresa.com` se puede iniciar sesión escribiendo solo `operativo1`.
-5. Reinicia `npm run web`. En el primer inicio de sesión se cargan los datos iniciales en Firestore (colecciones
-   `customers`, `sales`, `trainings`, `licenses`, `consultations`; reglas en `settings/rules`; marcas en `_meta`).
-
-El `apiKey` de Firebase web es un identificador público; la seguridad la dan Firebase Auth y `firestore.rules`.
-Cada carga lee la colección completa de ventas (~1.400 documentos): para volúmenes grandes conviene paginar o agregar en el backend.
+Los datos se guardan en el almacenamiento local del dispositivo (AsyncStorage; `localStorage` en web): no se comparten entre equipos ni usuarios.
+Las pantallas no dependen del almacenamiento: para pasar a una base de datos remota basta con implementar `Collection` en `src/core/storage/collection.ts`.
 
 ## Asistente IA
 
@@ -51,7 +42,7 @@ src/
   core/                    config, tema, utils, almacenamiento, navegación, contenedor de dependencias
   shared/                  componentes (ui, DataTable, charts), hooks, layout (AppShell)
   modules/
-    auth/                  domain · application (store de sesión) · infrastructure (Firebase Auth / local)
+    auth/                  domain · application (store de sesión) · infrastructure (usuario local)
     customers/             domain (entidades, segmentación, filtros) · application · infrastructure · presentation
     analytics/             domain (KPIs y series) · presentation
     ai-insights/           domain (puerto AIInsightsService) · infrastructure (reglas / http) · presentation (panel)
@@ -61,7 +52,7 @@ src/
 ```
 
 - Las dependencias apuntan al dominio. Las pantallas usan hooks; los hooks usan servicios de aplicación; los servicios dependen de **interfaces** (`CustomerRepository`, `AuthService`, `AIInsightsService`, `FileGateway`, `SpreadsheetCodec`, `CrudRepository`).
-- `src/core/providers/container.ts` es el único lugar que conoce las implementaciones. `src/core/storage/collection.ts` elige Firestore o almacenamiento local según la configuración.
+- `src/core/providers/container.ts` es el único lugar que conoce las implementaciones. Las colecciones pasan por el puerto `Collection` (`src/core/storage/collection.ts`).
 - La lógica de negocio es pura y se prueba sin pantallas (`tests/`).
 
 ## Datos iniciales
