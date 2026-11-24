@@ -1,0 +1,67 @@
+services:
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: green360-mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025" # Bandeja web gratuita para probar correos masivos localmente
+      - "1025:1025" # Servidor SMTP local gratuito
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: green360-n8n
+    restart: unless-stopped
+    depends_on:
+      - mailpit
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-green360-dev-encryption-key-change-in-prod-32c}
+      - GENERIC_TIMEZONE=America/Bogota
+      - TZ=America/Bogota
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=${N8N_PUBLIC_URL:-http://localhost:5678/}
+      - N8N_EMAIL_MODE=smtp
+      - N8N_SMTP_HOST=${SMTP_HOST:-mailpit}
+      - N8N_SMTP_PORT=${SMTP_PORT:-1025}
+      - N8N_SMTP_USER=${SMTP_USER:-}
+      - N8N_SMTP_PASS=${SMTP_PASS:-}
+      - N8N_SMTP_SENDER=${SMTP_SENDER:-operaciones@greenservices.co}
+      - N8N_SMTP_SSL=${SMTP_SSL:-false}
+      - SMTP_HOST=${SMTP_HOST:-mailpit}
+      - SMTP_PORT=${SMTP_PORT:-1025}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - SMTP_SSL=${SMTP_SSL:-false}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/workflows:ro
+      - ./n8n/scripts/boot-n8n.sh:/boot-n8n.sh:ro
+    entrypoint: ["/bin/sh", "/boot-n8n.sh"]
+
+  greensight-api:
+    build:
+      context: ./backend
+    container_name: green360-greensight-api
+    restart: unless-stopped
+    depends_on:
+      - n8n
+    ports:
+      - "8000:8000"
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+      - HF_BASE_URL=${HF_BASE_URL:-https://router.huggingface.co/v1}
+      - HF_MODEL=${HF_MODEL:-meta-llama/Llama-3.1-8B-Instruct}
+      - HF_FALLBACK_MODELS=${HF_FALLBACK_MODELS:-Qwen/Qwen3.5-9B,google/gemma-3-4b-it,meta-llama/Llama-3.2-3B-Instruct}
+      - N8N_WEBHOOK_URL=http://n8n:5678/webhook/green360-mass-email
+      - N8N_ALERTS_WEBHOOK_URL=http://n8n:5678/webhook/greensight-ml-alert
+      - COLAB_INSIGHTS_URL=${COLAB_INSIGHTS_URL:-}
+      - GREEN360_DATA_DIR=/data
+      - SMTP_SENDER=${SMTP_SENDER:-operaciones@greenservices.co}
+    volumes:
+      - ./src/data:/data
+
+volumes:
+  n8n_data:
