@@ -1,7 +1,5 @@
 // Composición: el único lugar que conoce las implementaciones concretas.
-import { env } from '@/core/config/env';
-import { createHttpInsightsService } from '@/modules/ai-insights/infrastructure/httpInsightsService';
-import { rulesInsightsService } from '@/modules/ai-insights/infrastructure/rulesInsightsService';
+import { hybridInsightsService } from '@/modules/ai-insights/infrastructure/hybridInsightsService';
 import { localAuthService } from '@/modules/auth/infrastructure/localAuthService';
 import { createCustomerService } from '@/modules/customers/application/customerService';
 import { customerRepository, saleRepository, settingsRepository, trmRepository } from '@/modules/customers/infrastructure/repositories';
@@ -18,7 +16,7 @@ export const container = {
   auth: localAuthService,
   customerService: createCustomerService({ customers, sales, trm: trmRepository, settings }),
   importService: createImportService({ customers, sales, files: { pick: pickSpreadsheet, save: saveFile }, codec: sheetJsCodec }),
-  insights: env.aiMode === 'connected' && env.aiApiUrl ? createHttpInsightsService(env.aiApiUrl) : rulesInsightsService,
+  insights: hybridInsightsService,
   trainings: trainingRepository(),
   licenses: licenseRepository(),
   consultations: consultationRepository(),

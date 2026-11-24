@@ -1,0 +1,53 @@
+{
+  "id": "greensightMlAlertWf",
+  "name": "GreenSight Colab - Alertas MoE",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "greensight-ml-alert",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wh-ml-alert",
+      "name": "Webhook Alerta GreenSight ML",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "greensight-ml-alert-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst cluster = body.segmento_cluster ?? 1;\nconst demanda = Number(body.demanda_optimizada_moe_m_cop ?? body.demanda_optimizada_moe ?? 0);\nconst alta = cluster === 0 || cluster === 2 || demanda >= 15;\nreturn [{\n  json: {\n    ok: true,\n    workflow: 'greensight-ml-alert',\n    prioridad: alta ? 'ALTA' : 'ESTANDAR',\n    segmento_cluster: cluster,\n    demanda_optimizada_moe_m_cop: demanda,\n    recomendacion: body.recomendacion_producto || 'Seguimiento comercial Green Services',\n    procesadoEn: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "code-eval-ml",
+      "name": "Clasificar Prioridad MoE",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {}
+      },
+      "id": "respond-ml-alert",
+      "name": "Confirmar Recepcion ML",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [780, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Alerta GreenSight ML": {
+      "main": [[{ "node": "Clasificar Prioridad MoE", "type": "main", "index": 0 }]]
+    },
+    "Clasificar Prioridad MoE": {
+      "main": [[{ "node": "Confirmar Recepcion ML", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

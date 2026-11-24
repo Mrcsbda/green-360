@@ -42,3 +42,7 @@ yarn-error.*
 
 # Variables de entorno (credenciales de Firebase)
 .env
+
+# Python
+__pycache__/
+*.py[cod]
