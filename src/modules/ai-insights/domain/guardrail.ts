@@ -1,5 +1,6 @@
 import type { GreenSightColabReport } from '@/modules/analytics/domain/colabInsights';
 import { formatCOPShort } from '@/core/utils/format';
+import type { CustomerView } from '@/modules/customers/domain/segmentation';
 import type { ChatTurn, EmailAutomationDraft, InsightContext } from './insights';
 
 const norm = (s: string) =>
@@ -98,7 +99,40 @@ const GREEN_SERVICES_TERMS = [
   'reposicion',
   'vip',
   'recurrente',
+  'resumen',
+  'metrica',
+  'total',
+  'sector',
+  'vencid',
+  'vencer',
+  'mensual',
+  'facturado',
+  'facturo',
+  'compro',
+  'quienes son',
+  'que ofrecen',
+  'que hacen',
 ];
+
+/**
+ * Clientes registrados mencionados en el texto: por nombre completo o por número
+ * ("cliente 7", "cliente de prueba 007", "empresa #12").
+ */
+export function findMentionedCustomers(text: string, views: CustomerView[]): CustomerView[] {
+  const q = norm(text);
+  if (!q) return [];
+  const nums = new Set(
+    [...q.matchAll(/\b(?:cliente|empresa)s?(?: de prueba)?\s*(?:#|no\.?|numero)?\s*0*(\d{1,4})\b/g)].map((m) => Number(m[1])),
+  );
+  return views
+    .filter((v) => {
+      const name = norm(v.empresa);
+      if (name.length >= 4 && q.includes(name)) return true;
+      const n = name.match(/(\d+)$/);
+      return !!n && nums.has(Number(n[1]));
+    })
+    .slice(0, 5);
+}
 
 const OFF_TOPIC_PATTERNS = [
   /\b(clima|tiempo|lluvia|pronostico)\b/,
@@ -138,6 +172,7 @@ export function isMassEmailAutomationIntent(question: string): boolean {
 export function checkGreenServicesTopic(
   question: string,
   history: ChatTurn[] = [],
+  mentionsCustomer = false,
 ): { allowed: boolean; reason: string; kind: 'domain' | 'greeting' | 'follow_up' | 'blocked' } {
   const q = norm(question);
   if (!q) {
@@ -157,7 +192,7 @@ export function checkGreenServicesTopic(
     };
   }
 
-  if (GREEN_SERVICES_TERMS.some((term) => q.includes(term))) {
+  if (mentionsCustomer || GREEN_SERVICES_TERMS.some((term) => q.includes(term))) {
     return { allowed: true, kind: 'domain', reason: 'ok' };
   }
 
@@ -166,7 +201,8 @@ export function checkGreenServicesTopic(
   }
 
   const followUps = ['y a esos', 'esos', 'cuales', 'cuantos', 'hazlo', 'cambiale', 'mejora', 'mas formal', 'mas corto', 'envialo', 'repite', 'explica', 'detalle', 'por que'];
-  if (history.length > 0 && followUps.some((f) => q.includes(f))) {
+  // Seguimiento corto dentro de una conversación ya iniciada sobre Green Services ("¿y en Cali?").
+  if (history.length > 0 && (followUps.some((f) => q.includes(f)) || q.split(/\s+/).length <= 6)) {
     return { allowed: true, kind: 'follow_up', reason: 'follow_up' };
   }
 

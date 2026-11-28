@@ -105,7 +105,37 @@ GREEN_SERVICES_TERMS = (
     "reposicion",
     "vip",
     "recurrente",
+    "resumen",
+    "metrica",
+    "total",
+    "sector",
+    "vencid",
+    "vencer",
+    "mensual",
+    "facturado",
+    "facturo",
+    "compro",
+    "quienes son",
+    "que ofrecen",
+    "que hacen",
 )
+
+_CLIENT_NUM_RE = re.compile(r"\b(?:cliente|empresa)s?(?: de prueba)?\s*(?:#|no\.?|numero)?\s*0*(\d{1,4})\b")
+
+
+def find_mentioned_clients(text: str, clientes: list[dict] | None) -> list[dict]:
+    """Clientes registrados mencionados por nombre completo o por número ("cliente 7", "cliente de prueba 007")."""
+    q = normalize_text(text or "")
+    if not q or not clientes:
+        return []
+    nums = {int(n) for n in _CLIENT_NUM_RE.findall(q)}
+    found = []
+    for c in clientes:
+        name = normalize_text(str(c.get("empresa", "")))
+        tail = re.search(r"(\d+)$", name)
+        if (len(name) >= 4 and name in q) or (tail and int(tail.group(1)) in nums):
+            found.append(c)
+    return found[:5]
 
 OFF_TOPIC_PATTERNS = (
     r"\b(clima|tiempo|lluvia|pronostico)\b",
@@ -144,7 +174,7 @@ def is_automation_request(question: str) -> bool:
     return any(term in q for term in AUTOMATION_TERMS)
 
 
-def check_green_services_scope(question: str, history: list[dict] | None = None) -> tuple[bool, str]:
+def check_green_services_scope(question: str, history: list[dict] | None = None, mentions_customer: bool = False) -> tuple[bool, str]:
     """
     Valida que la conversación permanezca estrictamente dentro del dominio de Green Services / Green 360°.
     Retorna (allowed, reason).
@@ -162,7 +192,7 @@ def check_green_services_scope(question: str, history: list[dict] | None = None)
                 "consultas y automatizaciones operativas en n8n).",
             )
 
-    if any(term in q for term in GREEN_SERVICES_TERMS):
+    if mentions_customer or any(term in q for term in GREEN_SERVICES_TERMS):
         return True, "green_services_keyword"
 
     # Saludos cortos o seguimiento directo cuando la conversación previa es sobre Green Services
@@ -170,7 +200,8 @@ def check_green_services_scope(question: str, history: list[dict] | None = None)
         return True, "greeting"
 
     follow_up_markers = ("y a esos", "esos", "cuales", "cuantos", "hazlo", "cambiale", "mejora", "mas formal", "mas corto", "envialo", "repite", "explica", "detalle", "por que")
-    if history and len(history) > 0 and any(m in q for m in follow_up_markers):
+    # Seguimiento corto dentro de una conversación ya iniciada sobre Green Services ("¿y en Cali?").
+    if history and (any(m in q for m in follow_up_markers) or len(q.split()) <= 6):
         return True, "follow_up"
 
     return (
