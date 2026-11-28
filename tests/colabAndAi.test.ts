@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildLocalMoeEmailDraft,
   checkGreenServicesTopic,
+  findMentionedCustomers,
   isMassEmailAutomationIntent,
 } from '@/modules/ai-insights/domain/guardrail';
 import { hybridInsightsService } from '@/modules/ai-insights/infrastructure/hybridInsightsService';
@@ -96,5 +97,25 @@ describe('automatización n8n por texto y generación de prompt MoE', () => {
     );
     expect(autoRes.automation).toBeDefined();
     expect(autoRes.automation?.totalClientesObjetivo).toBeGreaterThan(0);
+  });
+});
+
+describe('chat sobre clientes registrados y Dashboard', () => {
+  const ctx = { views: views(), rules: DEFAULT_RULES, ventasPorMes: [] };
+  const first = ctx.views[0];
+
+  it('encuentra clientes registrados por nombre y no confunde números sueltos', () => {
+    expect(findMentionedCustomers(`¿Cómo va ${first.empresa}?`, ctx.views).map((v) => v.id)).toContain(first.id);
+    expect(findMentionedCustomers('dame el top 10 de ventas', ctx.views)).toHaveLength(0);
+  });
+
+  it('responde la ficha de un cliente registrado y un resumen del Dashboard, y sigue bloqueando temas ajenos', async () => {
+    const ficha = await hybridInsightsService.ask(`¿Qué sabes de ${first.empresa}?`, ctx, []);
+    expect(ficha.items[0]?.id).toBe(first.id);
+    const resumen = await hybridInsightsService.ask('Dame un resumen del dashboard', ctx, []);
+    expect(resumen.datosSuficientes).toBe(true);
+    expect(resumen.texto).toContain(`${ctx.views.length} clientes`);
+    const history = [{ role: 'user' as const, content: 'resumen del dashboard' }];
+    expect((await hybridInsightsService.ask('cuéntame un chiste', ctx, history)).tipo).toBe('regla');
   });
 });

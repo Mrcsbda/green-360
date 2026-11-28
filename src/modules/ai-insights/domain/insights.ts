@@ -94,6 +94,29 @@ export interface InsightContext {
   rules: SegmentationRules;
   /** Ventas confirmadas por mes (yyyy-mm → COP) de los clientes del contexto. */
   ventasPorMes: { mes: string; valor: number }[];
+  /** Resumen de lo que muestra el Dashboard; lo arma el chat antes de enviar la pregunta. */
+  dashboard?: DashboardSnapshot;
+}
+
+/** Cifras del Dashboard (KPIs, gráficas, Colab y operaciones) para que el chat responda sobre ellas. */
+export interface DashboardSnapshot {
+  fechaReferencia: string;
+  kpis: {
+    totalClientes: number;
+    frecuentes: number;
+    frios: number;
+    sinSegmentar: number;
+    ventasAcumuladasCOP: number;
+    sinActividadReciente: number;
+  };
+  segmentos: { segmento: string; clientes: number; valorCOP: number }[];
+  ciudades: { ciudad: string; clientes: number }[];
+  canales: { canal: string; clientes: number }[];
+  ventasMensuales: { mes: string; valor: number }[];
+  clustersColab: { clusterId: number; label: string; clientes: number; demandaMoeCOP: number; recomendacion: string }[];
+  productosColab: { producto: string; demandaMoeCOP: number; prioridad: string }[];
+  licencias: { total: number; porVencer: number; vencidas: number };
+  proximasCapacitaciones: { nombre: string; fecha: string; hora: string; cliente: string }[];
 }
 
 /** Puerto del asistente: reglas locales o backend Hugging Face + GreenSight MoE + n8n. */

@@ -40,6 +40,7 @@ class AskPayload(BaseModel):
     fechaReferencia: str = "2026-10-31"
     clientes: list[dict[str, Any]] = Field(default_factory=list)
     ventasPorMes: list[dict[str, Any]] = Field(default_factory=list)
+    dashboard: dict[str, Any] = Field(default_factory=dict)
     history: list[ChatMessage] = Field(default_factory=list)
 
 
